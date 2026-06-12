@@ -165,6 +165,10 @@ window.SPECKLED_CONTENT = {
             ]
           }
         ]
+      ],
+      "wave_solved": [
+        8,
+        12
       ]
     },
     {
@@ -384,6 +388,11 @@ window.SPECKLED_CONTENT = {
           }
         ]
       ],
+      "wave_solved": [
+        4,
+        9,
+        20
+      ],
       "verdict": {
         "question": "这些物品都很可疑——可真正置人于死的,究竟是哪一件?",
         "answer": "毒蛇",
@@ -554,6 +563,10 @@ window.SPECKLED_CONTENT = {
           }
         ]
       ],
+      "wave_solved": [
+        6,
+        10
+      ],
       "verdict": {
         "question": "门窗反锁,蛇究竟从哪条路进出卧室?",
         "answer": "天花板通风口",
@@ -700,6 +713,10 @@ window.SPECKLED_CONTENT = {
             ]
           }
         ]
+      ],
+      "wave_solved": [
+        4,
+        8
       ],
       "verdict": {
         "question": "这些盘算里,哪一种才重到足以致人于死?",

@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>致命工具 · ENIGMA</title>
+<!-- 添加到主屏幕:图标与名称 -->
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ENIGMA">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0806">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+SC:wght@500;600;700&family=Pinyon+Script&display=swap" rel="stylesheet">
@@ -227,7 +234,11 @@
   .tool svg *{stroke:currentColor; stroke-width:1.6; fill:none; stroke-linecap:round; stroke-linejoin:round}
   .tool svg .flame{fill:currentColor; stroke:none}
 
-  .clues{margin-top:22px}
+  .clues{margin-top:22px; max-height:42vh; overflow-y:auto; padding-right:7px; -webkit-overflow-scrolling:touch; scrollbar-width:thin; scrollbar-color:rgba(187,157,80,.4) transparent}
+  .clues::-webkit-scrollbar{width:6px}
+  .clues::-webkit-scrollbar-track{background:rgba(187,157,80,.06); border-radius:6px}
+  .clues::-webkit-scrollbar-thumb{background:rgba(187,157,80,.38); border-radius:6px}
+  .clues::-webkit-scrollbar-thumb:hover{background:rgba(187,157,80,.6)}
   .wave-label{font-family:var(--caps); letter-spacing:.24em; font-size:11px; font-weight:600; color:var(--gold);
     margin:0 0 13px 2px; display:flex; align-items:center; gap:9px}
   .wave-label.verified{color:var(--gold-dim); margin-top:20px}
@@ -416,6 +427,26 @@
   .start-btn:hover{filter:brightness(1.05)}.start-btn:active{transform:translateY(1px)}
   .topbar .navback{position:absolute; left:6px; top:50%; transform:translateY(-50%); z-index:11}
 
+  /* ===== 悬浮:添加到主屏幕横幅(不占布局)===== */
+  .a2hs{position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:120;
+    width:calc(100% - 28px); max-width:392px; display:flex; align-items:center; gap:11px;
+    padding:9px 11px; border-radius:14px;
+    background:linear-gradient(180deg, rgba(28,21,12,.97), rgba(13,10,6,.98));
+    border:1px solid var(--gold-dim);
+    box-shadow:0 10px 26px rgba(0,0,0,.6), inset 0 1px 0 rgba(224,205,149,.1);
+    animation:a2hsDrop .42s cubic-bezier(.2,1,.4,1)}
+  .a2hs.hide{display:none}
+  @keyframes a2hsDrop{from{opacity:0; transform:translate(-50%,-16px)}}
+  .a2hs-ico{width:42px; height:42px; border-radius:10px; flex:none; object-fit:cover;
+    border:1px solid var(--line); box-shadow:0 2px 6px rgba(0,0,0,.5)}
+  .a2hs-tx{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; line-height:1.25}
+  .a2hs-tx b{font-family:var(--serif-cn); font-weight:700; font-size:13px; color:var(--gold-bright); letter-spacing:.02em}
+  .a2hs-tx span{font-family:var(--serif-cn); font-size:11px; color:var(--cream-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .a2hs-tx span i{color:var(--gold); font-style:normal}
+  .a2hs-x{flex:none; width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:none;
+    color:var(--gold-dim); cursor:pointer; font-size:12px; line-height:1; transition:color .2s, border-color .2s}
+  .a2hs-x:hover{color:var(--gold-bright); border-color:var(--gold)}
+
   :focus-visible{outline:2px solid var(--gold-bright); outline-offset:2px; border-radius:6px}
   @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
 </style>
@@ -434,6 +465,16 @@
       <g id="seal"><path d="M27 46 C26 55 28 60 30 65 C32 60 34 55 33 46 Z" fill="#481610"/><g fill="url(#waxg)"><circle cx="47" cy="30" r="7"/><circle cx="43" cy="18" r="7"/><circle cx="30" cy="13" r="7"/><circle cx="17" cy="18" r="7"/><circle cx="13" cy="30" r="7"/><circle cx="17" cy="42" r="7"/><circle cx="30" cy="47" r="7"/><circle cx="43" cy="42" r="7"/><circle cx="30" cy="30" r="20"/></g><circle cx="30" cy="30" r="14" fill="#5a1c15"/><g stroke="#8f3226" stroke-width="1.3" fill="none" opacity=".95"><circle cx="30" cy="30" r="9"/><path d="M30 21 V39 M21 30 H39 M23.6 23.6 L36.4 36.4 M36.4 23.6 L23.6 36.4"/></g><ellipse cx="23" cy="22" rx="5" ry="3" fill="rgba(255,210,190,.3)"/></g>
     </defs>
   </svg>
+
+  <!-- 悬浮:添加到主屏幕 -->
+  <div class="a2hs" id="a2hs">
+    <img class="a2hs-ico" src="icon.png" alt="ENIGMA">
+    <div class="a2hs-tx">
+      <b>把 ENIGMA 收进主屏幕</b>
+      <span>点 <i>分享 ⎙</i> →「添加到主屏幕」,像 App 一样畅玩</span>
+    </div>
+    <button class="a2hs-x" id="a2hsClose" aria-label="关闭">✕</button>
+  </div>
 
   <!-- ===== 首页 · 档案馆 ===== -->
   <div id="screen-home" class="screen on">
@@ -778,7 +819,8 @@
   function filledNum(){ let n=0; state.cells.forEach(row=>row.forEach(v=>{ if(v) n++; })); return n; }
   function totalShown(){ return CH.waves.reduce((a,w)=>a+w.length,0); }
   function revealedShown(){ let n=0; for(let w=0;w<state.revealedWaves;w++) n+=CH.waves[w].length; return n; }
-  function unlockNeed(w){ return Math.round(TOTAL_FILL*(w-1)/CH.waves.length); }
+  // 解锁下一波所需填格数 = 当前已揭示线索「逻辑上能推出的格子数」(由引擎导出)
+  function unlockNeed(){ const a = CH.wave_solved || []; return a[state.revealedWaves-1] || TOTAL_FILL; }
   const WAVE_CN = ["第一波线索","第二波线索","第三波线索","第四波线索","第五波线索"];
 
   function slip(e,done){ return el("div","slip"+(done?" done":""),'<span class="stext">'+e.text+'</span>'); }
@@ -799,7 +841,7 @@
     } else if(solved()){
       const b=el("button","solve-btn","▶ 指 认 真 凶 器"); b.onclick=openVerdict; box.appendChild(b);
     } else if(state.revealedWaves < CH.waves.length){
-      const need=unlockNeed(state.revealedWaves+1), have=filledNum(), left=Math.max(0,need-have);
+      const need=unlockNeed(), have=filledNum(), left=Math.max(0,need-have);
       const lock=el("div","locked"+(left===0?" open":""),"");
       lock.innerHTML = SEAL + '<span>'+(left===0
         ? "拆开封蜡 · 解锁<b>"+WAVE_CN[state.revealedWaves]+"</b>"
@@ -893,6 +935,11 @@
   $("#chaptersBack").addEventListener("click",()=>showScreen("screen-home"));
   $("#startCase").addEventListener("click",()=>{ showScreen("screen-board"); startGame(); });
   $("#boardBack").addEventListener("click",()=>showScreen("screen-chapters"));
+
+  // 悬浮「添加到主屏幕」横幅:可关闭并记住
+  const a2 = $("#a2hs");
+  try{ if(localStorage.getItem("enigma_a2hs")) a2.classList.add("hide"); }catch(e){}
+  $("#a2hsClose").addEventListener("click",()=>{ a2.classList.add("hide"); try{localStorage.setItem("enigma_a2hs","1");}catch(e){} });
 
   // ---- 初始化 ----
   $("#caseName").textContent = CH.title;
