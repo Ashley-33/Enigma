@@ -373,9 +373,9 @@ window.SPECKLED_CONTENT = {
         ]
       ],
       "wave_solved": [
-        7,
-        12,
-        20
+        4,
+        8,
+        12
       ],
       "verdict": {
         "question": "这些物品都很可疑——可真正置人于死的,究竟是哪一件?",
