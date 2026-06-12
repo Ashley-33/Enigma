@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>致命工具 · ENIGMA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+SC:wght@500;600;700&family=Pinyon+Script&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0806; --ink-2:#0f0b07; --panel:#141009;
+    --gold:#a98e49; --gold-dim:#7a6230; --gold-bright:#d6c089;
+    --cream:#d4c5a2; --cream-2:#bdac84;
+    --parch:#d3c39c; --parch-dk:#aa9a72;
+    --wax:#7e2a22; --wax-dk:#561a14; --blood:#6e201a; --ink-blot:#241a0c;
+    --line:rgba(187,157,80,.30); --line-soft:rgba(187,157,80,.14);
+    --serif-cn:"Noto Serif SC",serif; --serif-lat:"Cormorant Garamond",serif;
+    --caps:"Cinzel",serif; --hand:"Pinyon Script",cursive;
+    --fiber:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23f)' opacity='0.5'/%3E%3C/svg%3E");
+    --mottle:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.018' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='280' height='280' filter='url(%23m)' opacity='0.55'/%3E%3C/svg%3E");
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(130% 95% at 50% -8%, #110f0d 0%, #07060880 45%, #020203 100%);
+    color:var(--cream); font-family:var(--serif-cn);
+    display:flex; justify-content:center; padding:22px 14px 40px; min-height:100%;
+    -webkit-font-smoothing:antialiased;
+  }
+  .defs{position:absolute; width:0; height:0; overflow:hidden}
+
+  .parchment{
+    background-color:#c1ad7d;
+    background-image: var(--fiber), var(--mottle),
+      radial-gradient(120% 120% at 50% 50%, transparent 52%, rgba(34,22,8,.5) 100%),
+      radial-gradient(135% 115% at 26% 14%, #ece0b6 0%, #cdba85 46%, #9a855a 100%);
+    background-size:120px 120px, 280px 280px, cover, cover;
+    background-blend-mode:overlay, multiply, multiply, normal;
+  }
+  .parchment.brass{
+    background-color:#a89465;
+    background-image: var(--fiber), var(--mottle),
+      radial-gradient(120% 120% at 50% 50%, transparent 48%, rgba(26,16,6,.55) 100%),
+      radial-gradient(135% 115% at 30% 18%, #c2ad7b 0%, #9d885c 52%, #756238 100%);
+    background-size:120px 120px, 280px 280px, cover, cover;
+    background-blend-mode:overlay, multiply, multiply, normal;
+  }
+
+  .app{
+    position:relative; width:100%; max-width:406px;
+    background-color:#060507;
+    background-image: var(--fiber), var(--mottle),
+      radial-gradient(135% 100% at 50% -4%, #14110d 0%, #0a0809 50%, #050406 100%);
+    background-size:120px 120px, 280px 280px, cover;
+    background-blend-mode:soft-light, soft-light, normal;
+    border:1px solid var(--line); border-radius:30px;
+    padding:0 20px 30px; overflow:hidden;
+    box-shadow:0 0 0 1px rgba(0,0,0,.75), 0 34px 80px rgba(0,0,0,.75),
+      inset 0 1px 0 rgba(224,205,149,.06), inset 0 0 0 6px rgba(187,157,80,.045);
+  }
+  .app::before{ content:""; position:absolute; inset:0; border-radius:30px; pointer-events:none; z-index:8;
+    background-image:var(--fiber); background-size:90px 90px; opacity:.04; mix-blend-mode:overlay}
+  .app::after{ content:""; position:absolute; inset:0; border-radius:30px; pointer-events:none; z-index:9;
+    box-shadow:inset 0 0 130px 26px rgba(0,0,0,.9)}
+  .film{position:absolute; inset:0; border-radius:30px; pointer-events:none; z-index:9;
+    background:radial-gradient(120% 100% at 50% 40%, rgba(70,46,18,.06), rgba(8,6,4,.20) 100%); mix-blend-mode:soft-light}
+
+  .scrap{position:absolute; z-index:2}
+  .ink-dark{position:absolute; inset:0; z-index:5; pointer-events:none}
+  .ink-dark *{fill:#070504; stroke:rgba(150,120,70,.16); stroke-width:.5}
+  .topbar,.ledger,.hud,.clues,.corner-fil{position:relative; z-index:6}
+
+  .scrap.handwriting{
+    top:-10px; left:-12px; width:98px; height:54px; transform:rotate(-5deg);
+    border-radius:5px; padding:9px 10px; overflow:hidden; opacity:.7;
+    filter:url(#torn) drop-shadow(2px 3px 5px rgba(0,0,0,.55));
+    box-shadow:inset 0 0 18px rgba(70,52,28,.5), inset 0 0 0 1px rgba(60,44,24,.25);
+  }
+  .hw{font-family:var(--hand); font-size:11px; line-height:1.4; color:rgba(54,38,20,.58);
+    transform:rotate(-1deg); letter-spacing:.2px; user-select:none}
+  .scrap.compass-scrap{
+    bottom:-40px; right:-32px; width:150px; height:150px; transform:rotate(10deg);
+    border-radius:6px; overflow:hidden; opacity:.92;
+    filter:url(#torn) drop-shadow(-2px -3px 6px rgba(0,0,0,.5));
+    box-shadow:inset 0 0 30px rgba(70,52,28,.55), inset 0 0 0 1px rgba(60,44,24,.25);
+  }
+  .compass-art{position:absolute; inset:0; display:grid; place-items:center}
+  .compass-art svg{width:120px; height:120px; transform:translate(4px,4px) rotate(-9deg); opacity:.85}
+  .compass-art path,.compass-art circle,.compass-art line{stroke:#583c12; fill:none; stroke-width:1.1}
+  .compass-art polygon{fill:#583c12}
+  .compass-art text{fill:#583c12; font-family:var(--serif-lat); font-size:8px}
+  .scrap-blood{position:absolute; left:14px; bottom:16px; width:46px; height:40px; opacity:.5}
+  .scrap-blood *{fill:var(--blood)}
+  .ink{position:absolute; inset:0; pointer-events:none}
+  .ink .a{fill:var(--ink-blot); opacity:.5}.ink .b{fill:var(--ink-blot); opacity:.34}.ink .c{fill:var(--ink-blot); opacity:.22}
+
+  .corner-fil{position:absolute; width:46px; height:46px; pointer-events:none; opacity:.85}
+  .corner-fil.tl{top:8px; left:8px}
+  .corner-fil.tr{top:8px; right:8px; transform:scaleX(-1)}
+  .corner-fil.bl{bottom:8px; left:8px; transform:scaleY(-1)}
+  .corner-fil.br{bottom:8px; right:8px; transform:scale(-1,-1)}
+  .corner-fil path{fill:none; stroke:var(--gold-dim); stroke-width:1.1}
+  .corner-fil circle{fill:var(--gold)}
+
+  .topbar{position:relative; height:50px; margin:0 -20px; padding:0 18px;
+    display:flex; align-items:center; justify-content:center;
+    border-bottom:1px solid var(--line-soft);
+    background:linear-gradient(180deg, rgba(20,15,9,.6), rgba(12,9,6,.2))}
+  .brand{position:relative; font-family:var(--caps); font-weight:700; font-size:21px;
+    letter-spacing:.44em; text-indent:.44em; line-height:1;
+    background:linear-gradient(180deg,#efe0b3 0%,#d4b873 42%,#93732f 54%,#e2cb90 82%,#c2a052 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 1px 0 rgba(0,0,0,.7)) drop-shadow(0 0 12px rgba(187,157,80,.16))}
+  .brand::after{content:attr(data-text); position:absolute; left:0; top:0; width:100%;
+    font:inherit; letter-spacing:inherit; text-indent:inherit;
+    background:var(--fiber); background-size:60px 60px;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    mix-blend-mode:multiply; opacity:.5; pointer-events:none}
+  .brand .star{color:var(--gold-dim); font-size:9px; -webkit-text-fill-color:var(--gold-dim); margin:0 .5em; vertical-align:middle}
+  .lives{position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; gap:3px; z-index:10}
+  .drop{font-size:19px; line-height:1; filter:brightness(1.3) saturate(1.4) drop-shadow(0 0 5px rgba(214,42,28,.9)) drop-shadow(0 1px 1px rgba(0,0,0,.5)); transition:filter .2s}
+  .drop.lost{filter:grayscale(.92) brightness(.5); opacity:.26}
+  .bloodp{position:fixed; z-index:70; pointer-events:none; will-change:transform,opacity;
+    filter:brightness(1.25) saturate(1.4) drop-shadow(0 0 5px rgba(200,30,20,.9)); animation:burst .62s ease-out forwards}
+  @keyframes burst{0%{opacity:1; transform:translate(-50%,-50%) scale(.35)} 65%{opacity:1}
+    100%{opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.15)}}
+
+  .case-head{position:relative; z-index:2; display:flex; align-items:center; justify-content:center; gap:9px; margin:0 0 11px}
+  .case-no{font-family:var(--caps); letter-spacing:.2em; font-size:9px; font-weight:600; color:var(--gold-dim)}
+  .case-d{width:4px; height:4px; background:var(--gold); transform:rotate(45deg); flex:none; opacity:.8}
+  .case-name{font-family:var(--serif-cn); font-weight:700; font-size:16px; letter-spacing:.12em; text-indent:.12em; color:var(--gold-bright);
+    text-shadow:0 1px 0 #000}
+
+  .ledger{margin-top:12px; padding:15px 13px 13px; border:1px solid var(--line); border-radius:14px;
+    background:
+      radial-gradient(120% 80% at 20% 0%, rgba(36,27,15,.4), transparent 60%),
+      linear-gradient(180deg, rgba(18,14,10,.92), rgba(9,7,5,.94));
+    box-shadow:inset 0 0 50px rgba(0,0,0,.62), inset 0 1px 0 rgba(224,205,149,.05)}
+  .stain{position:absolute; border-radius:50%; pointer-events:none; z-index:0; mix-blend-mode:multiply}
+  .stain.s1{width:90px;height:70px; top:8px; left:32%; background:radial-gradient(circle,rgba(20,12,4,.5),transparent 70%); transform:rotate(18deg)}
+  .stain.s2{width:60px;height:60px; bottom:14px; left:10px; background:radial-gradient(circle,rgba(20,12,4,.42),transparent 70%)}
+
+  .grid{position:relative; z-index:2; display:grid; grid-template-columns:62px repeat(5,1fr); gap:4px}
+  .cell{min-height:48px; border-radius:7px; position:relative}
+
+  .corner{position:relative; overflow:hidden; display:grid; place-items:center;
+    background:radial-gradient(circle at 50% 38%, #281d11, #100b06);
+    border:1px solid var(--line); border-radius:9px}
+  .sigil{position:absolute; inset:0; margin:auto; width:56px; height:56px; opacity:.5; pointer-events:none}
+  .sigil *{stroke:var(--gold-dim); fill:none; stroke-width:.6}
+  .sigil .node{fill:var(--gold); stroke:none}
+  .det{position:relative; z-index:1; width:38px;height:38px;border-radius:50%; border:1.5px solid var(--gold-dim);
+    display:grid;place-items:center;
+    background:radial-gradient(circle at 50% 32%, #30240f, #150e07);
+    box-shadow:0 0 0 3px rgba(10,8,6,.92), inset 0 0 9px rgba(0,0,0,.6)}
+  .det svg{width:21px; height:21px}
+  .det svg *{stroke:var(--gold-bright); stroke-width:1.6; fill:none; stroke-linecap:round; stroke-linejoin:round}
+
+  .colhead{display:grid; place-items:center; gap:1px; padding:5px 0;
+    border:1px solid var(--line-soft); border-radius:8px;
+    background:linear-gradient(180deg, rgba(44,33,18,.9), rgba(22,16,9,.9));
+    box-shadow:inset 0 1px 0 rgba(224,205,149,.06)}
+  .colhead .letter{font-family:var(--caps); font-weight:700; font-size:18px; line-height:1;
+    background:linear-gradient(180deg,#f6efda 0%,#e7d9b3 55%,#cbb37e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 1px 0 rgba(0,0,0,.55)) drop-shadow(0 0 8px rgba(246,239,218,.25))}
+  .colhead .q{font-family:var(--serif-lat); font-size:14px; color:var(--gold-dim); line-height:.7}
+  .colhead .who{font-family:var(--serif-cn); font-size:8.5px; font-weight:600; color:var(--gold-bright); line-height:1; margin-top:1px}
+
+  .rowlabel{display:grid; place-items:center; text-align:center; line-height:1.15; padding:0 2px;
+    font-family:var(--serif-cn); font-weight:600; font-size:13px; letter-spacing:.06em; color:#241a0e;
+    border-radius:7px; border:1px solid rgba(0,0,0,.4);
+    box-shadow:inset 0 1px 0 rgba(238,228,200,.22), inset 0 -2px 6px rgba(70,50,26,.4), 0 1px 2px rgba(0,0,0,.5)}
+
+  .slotcell{cursor:pointer; display:grid; place-items:center; color:var(--gold-dim);
+    background-color:#0c0906;
+    background-image: var(--mottle),
+      radial-gradient(120% 120% at 50% 50%, rgba(26,19,11,.55), rgba(7,5,4,.7) 100%);
+    background-size:170px 170px, cover;
+    background-blend-mode:soft-light, normal;
+    border:1px solid var(--line-soft); border-radius:7px;
+    box-shadow:inset 0 0 16px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.3);
+    transition:border-color .25s, box-shadow .25s, transform .1s}
+  .slotcell::before{content:"·"; font-size:18px; color:rgba(187,157,80,.2)}
+  .slotcell:hover{border-color:var(--gold); box-shadow:inset 0 0 14px rgba(187,157,80,.16), inset 0 0 0 1px rgba(0,0,0,.3)}
+  .slotcell:active{transform:scale(.97)}
+  .slotcell.hint{animation:pulse 1.1s ease-in-out 2}
+  @keyframes pulse{50%{border-color:var(--gold-bright); box-shadow:0 0 16px rgba(224,205,149,.55)}}
+  .slotcell.editing{border-color:var(--gold-bright); box-shadow:0 0 16px rgba(224,205,149,.5), inset 0 0 14px rgba(187,157,80,.2)}
+  .slotcell.wrong{animation:wrongshake .42s}
+  @keyframes wrongshake{0%,100%{transform:translateX(0)}18%,58%{transform:translateX(-4px);border-color:var(--wax);box-shadow:0 0 16px rgba(126,42,34,.65)}40%,80%{transform:translateX(4px);border-color:var(--wax);box-shadow:0 0 16px rgba(126,42,34,.65)}}
+
+  .slotcell.filled{cursor:default; flex-direction:column; gap:1px; padding:4px 2px; color:#2c2012;
+    background-color:#cbb98c;
+    background-image: var(--fiber), var(--mottle),
+      radial-gradient(120% 120% at 50% 50%, transparent 50%, rgba(34,22,8,.5) 100%),
+      radial-gradient(130% 120% at 30% 18%, #e6dab3 0%, #cdbb8d 55%, #a89265 100%);
+    background-size:90px 90px, 200px 200px, cover, cover;
+    background-blend-mode:overlay, multiply, multiply, normal;
+    border:1px solid rgba(0,0,0,.4); overflow:hidden; transform:rotate(-.6deg);
+    box-shadow:inset 0 1px 0 rgba(248,240,220,.5), inset 0 -3px 8px rgba(70,50,26,.45), 0 3px 7px rgba(0,0,0,.55);
+    animation:stamp .3s cubic-bezier(.2,1.4,.4,1)}
+  .slotcell.filled::before{content:none}
+  .slotcell.filled::after{content:""; position:absolute; top:0; right:0; width:12px; height:12px;
+    background:linear-gradient(225deg, rgba(60,44,22,.5) 50%, transparent 50%)}
+  .slotcell .ico{font-size:18px; line-height:1}
+  .slotcell .lab{font-family:var(--serif-cn); font-weight:600; font-size:10px; letter-spacing:.01em; color:#3a2c16; line-height:1.05; text-align:center}
+  @keyframes stamp{0%{transform:scale(1.4) rotate(-5deg); opacity:0} 60%{transform:scale(.95) rotate(1deg); opacity:1} 100%{transform:scale(1) rotate(-.6deg)}}
+
+  .hud{display:flex; align-items:center; justify-content:space-between; margin-top:18px}
+  .clue-count{font-family:var(--caps); letter-spacing:.16em; font-size:12px; font-weight:600; color:var(--cream);
+    padding:9px 17px; border-radius:30px; border:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(44,33,18,.85), rgba(18,13,8,.9));
+    box-shadow:inset 0 1px 0 rgba(224,205,149,.09), 0 2px 7px rgba(0,0,0,.5)}
+  .clue-count b{color:var(--gold-bright); font-weight:700}
+  .clue-count .sep{color:var(--gold-dim); margin:0 2px}
+  .tools{display:flex; gap:10px}
+  .tool{width:42px; height:42px; border-radius:50%; cursor:pointer; font-size:18px; color:var(--gold-bright);
+    border:1px solid var(--line); display:grid; place-items:center;
+    background:radial-gradient(circle at 50% 34%, #281d10, #0f0a06);
+    box-shadow:inset 0 1px 0 rgba(224,205,149,.12), 0 2px 7px rgba(0,0,0,.5);
+    transition:transform .12s, border-color .2s, box-shadow .2s}
+  .tool:hover{border-color:var(--gold); box-shadow:0 0 15px rgba(187,157,80,.24)}
+  .tool:active{transform:scale(.92)}
+  .tool.armed{border-color:var(--wax); box-shadow:0 0 15px rgba(126,42,34,.55); color:#e0a89c}
+  .tool svg{width:21px; height:21px}
+  .tool svg *{stroke:currentColor; stroke-width:1.6; fill:none; stroke-linecap:round; stroke-linejoin:round}
+  .tool svg .flame{fill:currentColor; stroke:none}
+
+  .clues{margin-top:22px}
+  .wave-label{font-family:var(--caps); letter-spacing:.24em; font-size:11px; font-weight:600; color:var(--gold);
+    margin:0 0 13px 2px; display:flex; align-items:center; gap:9px}
+  .wave-label.verified{color:var(--gold-dim); margin-top:20px}
+  .wave-label .vleaf{flex:none; width:22px; height:12px}
+  .wave-label .vleaf path{stroke:var(--gold-dim); stroke-width:1; fill:none}
+  .wave-label .vleaf .gd{fill:var(--gold); stroke:none}
+  .wave-label::after{content:""; flex:1; height:1px; background:linear-gradient(90deg, var(--line), transparent)}
+  .slip{position:relative; font-family:var(--serif-cn); font-size:14px; line-height:1.6; color:var(--cream);
+    padding:13px 16px 13px 34px; margin-bottom:9px; border:1px solid var(--line-soft); border-radius:8px;
+    background:linear-gradient(180deg, rgba(27,21,12,.85), rgba(14,10,6,.88));
+    box-shadow:inset 0 1px 0 rgba(224,205,149,.04)}
+  .slip::before{content:""; position:absolute; left:13px; top:50%; transform:translateY(-50%);
+    width:11px; height:11px; border-radius:50%;
+    background:radial-gradient(circle at 36% 30%, #863429, var(--wax) 58%, var(--wax-dk));
+    box-shadow:inset 0 -1px 2px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.4)}
+  .slip.done{opacity:.5}
+  .slip.done .stext{text-decoration:line-through; text-decoration-color:rgba(212,197,162,.6)}
+  .slip.done::before{background:radial-gradient(circle at 36% 30%, #8fa760, #5f7d3c 58%, #3e5526)}
+
+  .locked{margin-top:16px; display:flex; align-items:center; gap:13px; justify-content:flex-start;
+    font-family:var(--serif-cn); font-size:13px; letter-spacing:.04em; color:var(--gold-dim);
+    padding:13px 16px; border:1px dashed var(--line); border-radius:9px; position:relative; z-index:7;
+    background:repeating-linear-gradient(45deg, #16110b 0 10px, #100b07 10px 20px)}
+  .wseal{width:46px; height:56px; flex:none; filter:drop-shadow(0 2px 3px rgba(0,0,0,.55)); cursor:pointer}
+  .locked b{color:var(--gold-bright); font-weight:600}
+  .locked.open{border-style:solid; border-color:var(--gold); color:var(--gold-bright); cursor:pointer; animation:sealpulse 1.8s ease-in-out infinite}
+  @keyframes sealpulse{50%{border-color:var(--gold-bright); box-shadow:0 0 16px rgba(224,205,149,.45)}}
+  .locked.open .wseal{filter:grayscale(.2) drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+
+  /* solve / verdict button */
+  .solve-btn{display:block; width:100%; margin-top:16px; cursor:pointer; font-family:var(--caps);
+    letter-spacing:.2em; text-indent:.2em; font-size:14px; font-weight:600; color:#1a120a; padding:15px; border:none; border-radius:11px;
+    background:linear-gradient(180deg,#e7d29a,#c2a052 55%,#8a6c2c);
+    box-shadow:0 3px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,250,235,.5)}
+  .solve-btn:active{transform:translateY(1px)}
+  .solve-btn.ghost{background:none; border:1px solid var(--line); color:var(--gold-dim); box-shadow:none; letter-spacing:.1em; margin-top:10px}
+
+  /* modal */
+  .backdrop{position:fixed; inset:0; z-index:50; display:none; align-items:center; justify-content:center; padding:24px;
+    background:rgba(4,3,2,.74); backdrop-filter:blur(3px)}
+  .backdrop.show{display:flex; animation:fade .2s ease}
+  @keyframes fade{from{opacity:0}}
+  .modal{width:100%; max-width:382px; border:1px solid var(--line); border-radius:18px; padding:22px 18px 16px;
+    background:linear-gradient(180deg, #1a140d, #0f0b07);
+    box-shadow:0 26px 64px rgba(0,0,0,.72), inset 0 1px 0 rgba(224,205,149,.08)}
+  .modal.in{animation:rise .26s cubic-bezier(.2,1,.4,1)}
+  @keyframes rise{from{transform:translateY(14px); opacity:0}}
+  .modal-title{text-align:center; font-family:var(--serif-cn); font-weight:700; font-size:18px; letter-spacing:.06em; color:var(--gold-bright); margin-bottom:3px}
+  .modal-sub{text-align:center; font-family:var(--caps); letter-spacing:.32em; font-size:9px; color:var(--gold-dim); text-indent:.32em; margin-bottom:16px}
+  .opts{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .opt{border:1px solid rgba(0,0,0,.34); border-radius:11px; cursor:pointer; padding:15px 8px 12px; text-align:center;
+    color:#2c2012; transform:rotate(-.5deg);
+    box-shadow:inset 0 1px 0 rgba(255,251,238,.55), inset 0 -2px 6px rgba(120,95,55,.3), 0 3px 8px rgba(0,0,0,.45);
+    transition:transform .12s, box-shadow .2s}
+  .opt:nth-child(even){transform:rotate(.5deg)}
+  .opt:hover{transform:translateY(-2px) rotate(0); box-shadow:inset 0 1px 0 rgba(255,251,238,.6), 0 6px 14px rgba(0,0,0,.5)}
+  .opt:active{transform:scale(.97)}
+  .opt.dim{opacity:.32; pointer-events:none; filter:grayscale(.5)}
+  .opt .e{font-size:26px; display:block; margin-bottom:7px; filter:drop-shadow(0 1px 1px rgba(80,60,30,.4))}
+  .opt .t{font-family:var(--serif-cn); font-weight:600; font-size:14px; color:#352714; letter-spacing:.03em}
+  .opt.full{grid-column:1 / -1}
+  .cancel{display:block; width:100%; margin-top:14px; background:none; border:none; cursor:pointer;
+    font-family:var(--serif-cn); font-size:14px; color:var(--gold-dim); letter-spacing:.1em; padding:8px; transition:color .2s}
+  .cancel:hover{color:var(--cream)}
+
+  /* verdict */
+  .v-q{font-family:var(--serif-cn); font-size:14px; line-height:1.6; color:var(--cream); text-align:center; margin-bottom:14px}
+  .v-cands{display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-bottom:14px}
+  .v-cand{cursor:pointer; border:1px solid rgba(0,0,0,.34); border-radius:11px; padding:11px 4px 9px; text-align:center; color:#2c2012; transform:rotate(-.5deg);
+    box-shadow:inset 0 1px 0 rgba(255,251,238,.5), 0 3px 8px rgba(0,0,0,.45)}
+  .v-cand:nth-child(even){transform:rotate(.5deg)}
+  .v-cand.sel{outline:2px solid var(--gold-bright); outline-offset:1px}
+  .v-cand .e{font-size:23px; display:block}
+  .v-cand .t{font-family:var(--serif-cn); font-weight:600; font-size:11px; color:#352714; line-height:1.1}
+  .star{position:relative; font-family:var(--serif-cn); font-size:12.5px; line-height:1.55; color:var(--cream);
+    padding:10px 13px 10px 30px; margin-bottom:8px; border:1px solid var(--line-soft); border-radius:8px;
+    background:linear-gradient(180deg, rgba(40,30,12,.55), rgba(20,15,8,.7))}
+  .star::before{content:"★"; position:absolute; left:11px; top:10px; color:var(--gold); font-size:12px}
+  .result{margin-top:14px; text-align:center; font-family:var(--serif-cn); font-size:14px; line-height:1.7; padding:13px; border-radius:11px; display:none}
+  .result.show{display:block}
+  .result.win{color:var(--gold-bright); border:1px solid var(--gold); background:rgba(40,33,14,.5)}
+  .result.lose{color:#e0a89c; border:1px solid var(--wax); background:rgba(40,16,12,.4)}
+
+  .toast{position:fixed; left:50%; bottom:46px; transform:translateX(-50%); z-index:60;
+    font-family:var(--serif-cn); font-size:13px; color:var(--cream);
+    background:linear-gradient(180deg,#1a140d,#0f0b07); border:1px solid var(--line); border-radius:30px;
+    padding:10px 20px; opacity:0; transition:opacity .2s; pointer-events:none; box-shadow:0 6px 20px rgba(0,0,0,.6)}
+  .toast.show{opacity:1}
+
+  /* ===== 多屏 ===== */
+  .screen{display:none; width:100%; justify-content:center}
+  .screen.on{display:flex}
+
+  /* ===== 首页 / 档案馆 ===== */
+  .skyline{height:120px; margin:0 -20px; overflow:hidden; position:relative; z-index:1}
+  .skyline svg{position:absolute; bottom:0; width:100%; height:120px}
+  .moon{fill:#cdbf9d}.sil-near{fill:#0c0806}.sil-far{fill:#120c08}
+  .cross{fill:none; stroke:#241910; stroke-width:1.2}.raven{fill:#171009}
+  .sky-fade{position:absolute; inset:0; background:linear-gradient(180deg, rgba(12,9,6,0) 30%, #0a0807 100%)}
+  .cover{position:relative; z-index:6; text-align:center; margin-top:-30px}
+  .brand-hero{position:relative; display:inline-block; font-family:var(--caps); font-weight:700; font-size:34px;
+    letter-spacing:.34em; text-indent:.34em; line-height:1;
+    background:linear-gradient(180deg,#efe0b3,#d4b873 42%,#93732f 54%,#e2cb90 82%,#c2a052);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 1px 0 rgba(0,0,0,.7)) drop-shadow(0 0 16px rgba(187,157,80,.18))}
+  .tagline{font-family:var(--serif-cn); font-size:11px; letter-spacing:.28em; text-indent:.28em; color:var(--gold-dim); margin-top:9px}
+  .flourish{display:flex; justify-content:center; margin:10px 0 2px}
+  .flourish svg{width:170px; height:16px}
+  .flourish path{stroke:var(--gold-dim); stroke-width:1; fill:none; stroke-linecap:round}.flourish .gd{fill:var(--gold); stroke:none}
+  .section-label{position:relative; z-index:6; display:flex; align-items:center; justify-content:center; gap:11px; margin:22px 0 14px;
+    font-family:var(--caps); letter-spacing:.3em; text-indent:.3em; font-size:10px; font-weight:600; color:var(--gold-dim)}
+  .section-label::before,.section-label::after{content:""; width:38px; height:1px; background:linear-gradient(90deg, transparent, var(--line))}
+  .section-label::after{transform:scaleX(-1)}
+  .stories{position:relative; z-index:6; display:flex; flex-direction:column; gap:14px}
+  .story{position:relative; display:flex; gap:13px; padding:14px; border:1px solid var(--line); border-radius:15px; overflow:hidden; cursor:pointer;
+    background:linear-gradient(180deg, rgba(26,20,12,.85), rgba(12,9,6,.9));
+    box-shadow:inset 0 1px 0 rgba(224,205,149,.05), 0 6px 18px rgba(0,0,0,.5); transition:transform .18s, border-color .2s, box-shadow .2s}
+  .story:hover{transform:translateY(-2px); border-color:var(--gold); box-shadow:0 10px 26px rgba(0,0,0,.6)}
+  .story-cover{position:relative; width:76px; height:92px; flex:none; border-radius:10px; border:1px solid var(--line-soft); display:grid; place-items:center; overflow:hidden; background:radial-gradient(circle at 50% 30%, #221a0f, #0c0805)}
+  .story-cover .emb{width:50px; height:50px}
+  .story-cover .emb *{stroke:var(--gold); fill:none; stroke-width:1.2; stroke-linejoin:round}.story-cover .emb .sld{fill:rgba(187,157,80,.12); stroke:none}
+  .story-cover::after{content:""; position:absolute; inset:0; box-shadow:inset 0 0 20px rgba(0,0,0,.6)}
+  .story-body{flex:1; min-width:0; padding-top:2px}
+  .vol{font-family:var(--caps); letter-spacing:.2em; font-size:9px; font-weight:600; color:var(--gold-dim)}
+  .story-title{font-family:var(--serif-cn); font-weight:700; font-size:20px; letter-spacing:.06em; color:var(--gold-bright); margin:3px 0 0; text-shadow:0 1px 0 #000}
+  .story-desc{font-family:var(--serif-cn); font-size:12px; line-height:1.55; color:var(--cream-2); margin-top:6px; opacity:.9; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+  .story-meta{display:flex; align-items:center; justify-content:space-between; margin-top:10px; font-family:var(--serif-cn); font-size:11px; color:var(--gold-dim)}
+  .go{display:inline-flex; align-items:center; gap:5px; font-family:var(--caps); letter-spacing:.12em; font-size:10px; font-weight:600; color:var(--gold-bright)}
+  .go svg{width:14px;height:10px}.go svg path{stroke:var(--gold-bright); stroke-width:1.4; fill:none; stroke-linecap:round; stroke-linejoin:round}
+  .wax-stamp{position:absolute; top:-6px; right:10px; width:40px; height:48px; transform:rotate(7deg); opacity:.95; pointer-events:none; filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+  .story.soon{cursor:default}
+  .story.soon .story-cover{filter:grayscale(.5) brightness(.7)}
+  .story.soon .story-title{color:var(--cream-2)}
+  .story.soon .story-desc{font-family:var(--hand); font-size:15px; color:rgba(189,172,132,.7); -webkit-line-clamp:1}
+  .soon-tag{display:inline-flex; align-items:center; gap:6px; margin-top:10px; font-family:var(--caps); letter-spacing:.22em; font-size:9.5px; font-weight:600; color:var(--gold-dim); padding:5px 11px; border:1px dashed var(--line); border-radius:30px}
+  .soon-seal{position:absolute; top:50%; right:14px; transform:translateY(-50%) rotate(-8deg); width:50px; height:60px; opacity:.85; pointer-events:none}
+  .story.soon .story-body{padding-right:54px}
+  .foot{position:relative; z-index:6; text-align:center; margin-top:22px; font-family:var(--caps); letter-spacing:.3em; text-indent:.3em; font-size:8.5px; color:rgba(131,105,47,.7)}
+
+  /* ===== 章节页 / 卷宗目录 ===== */
+  .cbar{position:relative; z-index:6; height:50px; margin:0 -20px; padding:0 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line-soft); background:linear-gradient(180deg, rgba(20,15,9,.6), rgba(12,9,6,.2))}
+  .back{display:inline-flex; align-items:center; gap:7px; cursor:pointer; font-family:var(--caps); letter-spacing:.14em; font-size:11px; font-weight:600; color:var(--gold-bright); padding:8px 8px; transition:color .2s; background:none; border:1px solid var(--line); border-radius:20px}
+  .back:hover{color:#fff; border-color:var(--gold)}
+  .back svg path{stroke:var(--gold-bright)}
+  .topbar .navback{border:1px solid var(--line); border-radius:50%; width:34px; height:34px; justify-content:center; padding:0}
+  .back svg{width:15px; height:11px}.back svg path{stroke:currentColor; stroke-width:1.5; fill:none; stroke-linecap:round; stroke-linejoin:round}
+  .cbar .mark{font-family:var(--caps); letter-spacing:.34em; text-indent:.34em; font-size:13px; font-weight:700; background:linear-gradient(180deg,#e2cb90,#a8893f); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .cbar .spacer{width:56px}
+  .story-head{position:relative; z-index:6; text-align:center; margin-top:14px}
+  .story-name{font-family:var(--serif-cn); font-weight:700; font-size:23px; letter-spacing:.1em; text-indent:.1em; color:var(--gold-bright); margin:5px 0 0; text-shadow:0 1px 0 #000, 0 0 16px rgba(187,157,80,.14)}
+  .story-en{font-family:var(--caps); letter-spacing:.2em; font-size:8.5px; color:var(--gold-dim); margin-top:4px}
+  .progress{display:flex; align-items:center; justify-content:center; gap:9px; margin-top:10px; font-family:var(--caps); letter-spacing:.16em; font-size:9px; color:var(--gold-dim)}
+  .pbar{width:108px; height:3px; border-radius:3px; background:rgba(187,157,80,.16); overflow:hidden; position:relative}
+  .pbar i{position:absolute; left:0; top:0; bottom:0; width:20%; background:linear-gradient(90deg,#9a7c3d,#e0cd95)}
+  .chapter-list{position:relative; z-index:6; display:flex; flex-direction:column; gap:11px; margin-top:18px}
+  .chapter{position:relative; display:flex; align-items:center; gap:13px; padding:13px 14px; border:1px solid var(--line-soft); border-radius:13px; overflow:hidden; background:linear-gradient(180deg, rgba(24,18,11,.82), rgba(12,9,6,.88))}
+  .ch-emblem{position:relative; width:46px; height:46px; flex:none; display:grid; place-items:center}
+  .ch-emblem .sigil{position:absolute; inset:0; margin:auto; width:46px; height:46px; opacity:.5; pointer-events:none}
+  .ch-emblem .sigil *{stroke:var(--gold-dim); fill:none; stroke-width:.6}.ch-emblem .sigil .node{fill:var(--gold); stroke:none}
+  .ch-roman{position:relative; z-index:1; font-family:var(--caps); font-weight:700; font-size:16px; line-height:1; background:linear-gradient(180deg,#f1e6c2,#bf9d50); -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:0 1px 0 #000}
+  .ch-body{flex:1; min-width:0}
+  .ch-no{font-family:var(--caps); letter-spacing:.16em; font-size:8.5px; font-weight:600; color:var(--gold-dim)}
+  .ch-title{font-family:var(--serif-cn); font-weight:700; font-size:15px; letter-spacing:.04em; color:var(--gold-bright); margin:2px 0 0; text-shadow:0 1px 0 #000}
+  .ch-desc{font-family:var(--serif-cn); font-size:11px; line-height:1.45; color:var(--cream-2); margin-top:2px; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .ch-status{flex:none; width:22px; display:grid; place-items:center; color:var(--gold-bright)}
+  .ch-status svg{width:19px; height:19px}.ch-status svg *{stroke:currentColor; stroke-width:1.5; fill:none; stroke-linecap:round; stroke-linejoin:round}
+  .chapter.done .ch-title{color:var(--cream-2)}.chapter.done .ch-status{color:var(--gold-dim)}
+  .chapter.locked{opacity:.6}.chapter.locked .ch-title{color:var(--cream-2)}
+  .chapter.locked .ch-desc{font-family:var(--hand); font-size:14px; letter-spacing:.4px; color:rgba(189,172,132,.7)}
+  .chapter.locked .ch-status{color:var(--gold-dim)}
+  .chapter .wseal{width:44px; height:52px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+  .dossier{position:relative; padding:20px 20px 22px; border-radius:12px; color:#352712; overflow:hidden;
+    background-color:#cdb98a;
+    background-image: var(--fiber), var(--mottle), radial-gradient(120% 130% at 50% 0%, transparent 55%, rgba(40,26,10,.4) 100%), radial-gradient(135% 120% at 28% 12%, #ece0bb 0%, #d3c193 48%, #b39c6e 100%);
+    background-size:120px 120px, 280px 280px, cover, cover; background-blend-mode:overlay, multiply, multiply, normal;
+    border:1px solid rgba(60,44,22,.5); box-shadow:inset 0 1px 0 rgba(255,250,232,.5), inset 0 0 34px rgba(120,90,48,.32), inset 0 -20px 38px rgba(90,64,30,.26), 0 10px 26px rgba(0,0,0,.55)}
+  .d-head{display:flex; align-items:center; gap:10px; margin-bottom:12px}
+  .ch-badge{padding:5px 13px; border-radius:30px; font-family:var(--serif-cn); font-weight:700; font-size:11px; letter-spacing:.12em; color:#f3e6c4; background:linear-gradient(180deg,#7e2a22,#561a14); border:1px solid rgba(255,210,190,.25); box-shadow:inset 0 1px 0 rgba(255,200,180,.3), 0 2px 4px rgba(0,0,0,.35)}
+  .now-tag{font-family:var(--caps); letter-spacing:.14em; font-size:8px; color:#7e2a22; border:1px solid rgba(126,42,34,.45); border-radius:20px; padding:3px 8px}
+  .d-title{margin:0; font-family:var(--serif-cn); font-weight:700; font-size:21px; letter-spacing:.03em; color:#2e2110; text-shadow:0 1px 0 rgba(255,248,228,.5)}
+  .d-flourish{display:flex; margin:11px 0 14px}.d-flourish svg{width:140px; height:12px}
+  .d-flourish path{stroke:#7a5b2c; stroke-width:1; fill:none; stroke-linecap:round}.d-flourish .gd{fill:#7a5b2c; stroke:none}
+  .intro-text{margin:0; font-family:var(--serif-cn); font-weight:500; font-size:14.5px; line-height:1.95; color:#3a2c16; letter-spacing:.02em; text-align:justify}
+  .intro-text .dropcap{float:left; font-family:var(--serif-lat); font-weight:600; font-size:52px; line-height:.82; margin:3px 11px -2px 0; color:#7e2a22; text-shadow:0 1px 0 rgba(255,240,220,.6)}
+  .start-btn{display:block; text-align:center; margin-top:18px; padding:15px; border-radius:11px; cursor:pointer; font-family:var(--serif-cn); font-weight:700; font-size:15px; letter-spacing:.3em; text-indent:.3em; color:#2a1d07; background:linear-gradient(180deg,#eedca0,#ccac61 46%,#9c7c39 54%,#dcc282); border:1px solid #6b521f; box-shadow:inset 0 1px 0 rgba(255,247,224,.7), inset 0 -3px 9px rgba(90,66,26,.5), 0 6px 16px rgba(0,0,0,.5); transition:transform .12s, filter .2s; border-width:1px; border-style:solid}
+  .start-btn:hover{filter:brightness(1.05)}.start-btn:active{transform:translateY(1px)}
+  .topbar .navback{position:absolute; left:6px; top:50%; transform:translateY(-50%); z-index:11}
+
+  :focus-visible{outline:2px solid var(--gold-bright); outline-offset:2px; border-radius:6px}
+  @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+</style>
+</head>
+<body>
+  <svg class="defs" aria-hidden="true">
+    <defs>
+      <filter id="torn" x="-15%" y="-15%" width="130%" height="130%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.015 0.02" numOctaves="3" seed="6" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="11" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <radialGradient id="waxg" cx="40%" cy="34%" r="72%">
+        <stop offset="0" stop-color="#8f3a30"/><stop offset="55%" stop-color="#722620"/><stop offset="100%" stop-color="#46150f"/>
+      </radialGradient>
+      <g id="sig"><circle cx="23" cy="23" r="21"/><circle cx="23" cy="23" r="16" stroke-dasharray="0.5 2.4"/><circle cx="23" cy="23" r="10.5"/><line x1="23" y1="1.5" x2="23" y2="44.5"/><line x1="1.5" y1="23" x2="44.5" y2="23"/><circle class="node" cx="23" cy="2.6" r="1.1"/><circle class="node" cx="23" cy="43.4" r="1.1"/><circle class="node" cx="2.6" cy="23" r="1.1"/><circle class="node" cx="43.4" cy="23" r="1.1"/></g>
+      <g id="seal"><path d="M27 46 C26 55 28 60 30 65 C32 60 34 55 33 46 Z" fill="#481610"/><g fill="url(#waxg)"><circle cx="47" cy="30" r="7"/><circle cx="43" cy="18" r="7"/><circle cx="30" cy="13" r="7"/><circle cx="17" cy="18" r="7"/><circle cx="13" cy="30" r="7"/><circle cx="17" cy="42" r="7"/><circle cx="30" cy="47" r="7"/><circle cx="43" cy="42" r="7"/><circle cx="30" cy="30" r="20"/></g><circle cx="30" cy="30" r="14" fill="#5a1c15"/><g stroke="#8f3226" stroke-width="1.3" fill="none" opacity=".95"><circle cx="30" cy="30" r="9"/><path d="M30 21 V39 M21 30 H39 M23.6 23.6 L36.4 36.4 M36.4 23.6 L23.6 36.4"/></g><ellipse cx="23" cy="22" rx="5" ry="3" fill="rgba(255,210,190,.3)"/></g>
+    </defs>
+  </svg>
+
+  <!-- ===== 首页 · 档案馆 ===== -->
+  <div id="screen-home" class="screen on">
+    <main class="app">
+      <div class="film"></div>
+      <svg class="corner-fil tl" viewBox="0 0 46 46"><path d="M6 6 H38"/><path d="M6 6 V38"/><path d="M38 6 q-7 0 -9 6 q-2 6 4 6 q5 0 3 -5"/><path d="M6 38 q0 -7 6 -9 q6 -2 6 4 q0 5 -5 3"/><circle cx="6" cy="6" r="2"/></svg>
+      <svg class="corner-fil tr" viewBox="0 0 46 46"><path d="M6 6 H38"/><path d="M6 6 V38"/><path d="M38 6 q-7 0 -9 6 q-2 6 4 6 q5 0 3 -5"/><path d="M6 38 q0 -7 6 -9 q6 -2 6 4 q0 5 -5 3"/><circle cx="6" cy="6" r="2"/></svg>
+      <svg class="corner-fil bl" viewBox="0 0 46 46"><path d="M6 6 H38"/><path d="M6 6 V38"/><path d="M38 6 q-7 0 -9 6 q-2 6 4 6 q5 0 3 -5"/><path d="M6 38 q0 -7 6 -9 q6 -2 6 4 q0 5 -5 3"/><circle cx="6" cy="6" r="2"/></svg>
+      <svg class="corner-fil br" viewBox="0 0 46 46"><path d="M6 6 H38"/><path d="M6 6 V38"/><path d="M38 6 q-7 0 -9 6 q-2 6 4 6 q5 0 3 -5"/><path d="M6 38 q0 -7 6 -9 q6 -2 6 4 q0 5 -5 3"/><circle cx="6" cy="6" r="2"/></svg>
+      <div class="scrap compass-scrap parchment" aria-hidden="true">
+        <div class="compass-art"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/><circle cx="50" cy="50" r="41" stroke-width="2.5" stroke-dasharray="0.6 3.2"/><circle cx="50" cy="50" r="33"/><circle cx="50" cy="50" r="11"/><polygon points="50,7 53.5,50 50,50 46.5,50"/><polygon points="50,93 46.5,50 50,50 53.5,50"/><polygon points="7,50 50,46.5 50,50 50,53.5"/><polygon points="93,50 50,53.5 50,50 50,46.5"/><text x="50" y="20" text-anchor="middle">N</text><text x="50" y="86" text-anchor="middle">S</text></svg></div>
+      </div>
+      <div class="skyline" aria-hidden="true">
+        <svg viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice">
+          <circle class="moon" cx="312" cy="40" r="22" opacity=".22"/><circle cx="304" cy="36" r="22" opacity=".22" fill="#0a0806"/>
+          <polygon class="sil-far" opacity=".7" points="0,88 40,88 40,62 50,62 50,88 96,88 96,42 104,42 104,26 110,14 116,26 116,42 124,42 124,88 210,88 210,54 218,54 218,88 250,88 250,48 258,48 258,32 264,22 270,32 270,48 278,48 278,88 400,88 400,120 0,120"/>
+          <polygon class="sil-near" points="0,92 14,92 14,74 22,74 22,92 40,92 40,60 48,60 48,92 70,92 70,52 82,52 82,34 88,20 94,34 94,52 106,52 106,92 130,92 130,66 138,66 138,92 150,92 150,46 158,46 158,26 164,12 170,26 170,46 178,46 178,92 200,92 200,60 206,48 212,60 212,92 230,92 230,54 240,54 240,38 246,28 252,38 252,54 262,54 262,92 286,92 286,70 294,70 294,92 310,92 310,50 318,50 318,32 324,18 330,32 330,50 338,50 338,92 360,92 360,62 368,62 368,92 400,92 400,120 0,120"/>
+          <path class="cross" d="M164 6 V14 M160 9 H168"/><path class="cross" d="M88 14 V22 M84 17 H92"/><path class="cross" d="M324 12 V20 M320 15 H328"/>
+        </svg>
+        <div class="sky-fade"></div>
+      </div>
+      <header class="cover">
+        <div class="brand-hero">ENIGMA</div>
+        <div class="tagline">维多利亚秘密档案馆</div>
+        <div class="flourish"><svg viewBox="0 0 200 16" aria-hidden="true"><path d="M2 8 H72"/><path d="M128 8 H198"/><path d="M72 8 q8 -7 13 0 q-8 7 -13 0"/><path d="M128 8 q-8 -7 -13 0 q8 7 13 0"/><circle class="gd" cx="58" cy="8" r="1.6"/><circle class="gd" cx="142" cy="8" r="1.6"/><polygon class="gd" points="100,2 105,8 100,14 95,8"/></svg></div>
+      </header>
+      <div class="section-label">档案系列</div>
+      <div class="stories">
+        <div class="story" id="openStory">
+          <div class="story-cover">
+            <svg class="emb" viewBox="0 0 50 50" aria-hidden="true"><polygon class="sld" points="25,8 40,20 40,42 10,42 10,20"/><path d="M10 20 L25 8 L40 20"/><path d="M10 20 V42 H40 V20"/><path d="M6 22 H8 V14 H11 V22"/><path d="M39 22 H44 V14 H41 V22"/><rect x="21" y="30" width="8" height="12"/><path d="M25 30 V42"/></svg>
+          </div>
+          <div class="story-body">
+            <div class="vol">VOL. I · 第一卷</div>
+            <h2 class="story-title">斑点带子案</h2>
+            <p class="story-desc">反锁的卧室里,一位小姐离奇暴毙。五桩相连的疑案,牵出一名隐于至亲之中的真凶。</p>
+            <div class="story-meta"><span>共 5 案 · 已破 1</span><span class="go">展开调查 <svg viewBox="0 0 14 10"><path d="M1 5 H12 M8 1 L12 5 L8 9"/></svg></span></div>
+          </div>
+          <svg class="wax-stamp" viewBox="0 0 60 70" aria-hidden="true"><use href="#seal"/></svg>
+        </div>
+        <div class="story soon">
+          <div class="story-cover"><svg class="emb" viewBox="0 0 50 50" aria-hidden="true"><path d="M8 40 C14 28 18 30 22 34 C26 22 30 26 34 30 C38 18 42 22 44 32" opacity=".7"/><path d="M8 40 H44"/><circle cx="25" cy="14" r="3"/></svg></div>
+          <div class="story-body"><div class="vol">VOL. II · 第二卷</div><h2 class="story-title">雾港迷案</h2><p class="story-desc">海雾深处,灯塔下的失踪者……</p><span class="soon-tag">敬请期待 · COMING SOON</span></div>
+          <svg class="soon-seal" viewBox="0 0 60 70" aria-hidden="true"><use href="#seal"/></svg>
+        </div>
+      </div>
+      <div class="foot">· EST. MDCCCXX—— ·</div>
+    </main>
+  </div>
+
+  <!-- ===== 章节页 · 卷宗目录 ===== -->
+  <div id="screen-chapters" class="screen">
+    <main class="app">
+      <div class="film"></div>
+      <svg class="corner-fil tl" viewBox="0 0 46 46"><path d="M6 6 H38"/><path d="M6 6 V38"/><path d="M38 6 q-7 0 -9 6 q-2 6 4 6 q5 0 3 -5"/><path d="M6 38 q0 -7 6 -9 q6 -2 6 4 q0 5 -5 3"/><circle cx="6" cy="6" r="2"/></svg>
+      <svg class="corner-fil br" viewBox="0 0 46 46"><path d="M6 6 H38"/><path d="M6 6 V38"/><path d="M38 6 q-7 0 -9 6 q-2 6 4 6 q5 0 3 -5"/><path d="M6 38 q0 -7 6 -9 q6 -2 6 4 q0 5 -5 3"/><circle cx="6" cy="6" r="2"/></svg>
+      <div class="scrap compass-scrap parchment" aria-hidden="true">
+        <div class="compass-art"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/><circle cx="50" cy="50" r="41" stroke-width="2.5" stroke-dasharray="0.6 3.2"/><circle cx="50" cy="50" r="33"/><circle cx="50" cy="50" r="11"/><polygon points="50,7 53.5,50 50,50 46.5,50"/><polygon points="50,93 46.5,50 50,50 53.5,50"/><polygon points="7,50 50,46.5 50,50 50,53.5"/><polygon points="93,50 50,53.5 50,50 50,46.5"/></svg></div>
+      </div>
+      <header class="cbar">
+        <button class="back" id="chaptersBack"><svg viewBox="0 0 15 11" aria-hidden="true"><path d="M14 5.5 H3 M7 1 L3 5.5 L7 10"/></svg>档案馆</button>
+        <span class="mark">ENIGMA</span><span class="spacer"></span>
+      </header>
+      <div class="story-head">
+        <div class="vol">VOL. I · 第一卷</div>
+        <h1 class="story-name">斑点带子案</h1>
+        <div class="story-en">THE SPECKLED BAND</div>
+        <div class="progress"><span>已破 1</span><span class="pbar"><i></i></span><span>共 5</span></div>
+      </div>
+      <div class="chapter-list">
+        <div class="chapter done">
+          <div class="ch-emblem"><svg class="sigil" viewBox="0 0 46 46" aria-hidden="true"><use href="#sig"/></svg><span class="ch-roman">I</span></div>
+          <div class="ch-body"><div class="ch-no">第 1 章</div><div class="ch-title">庄园的来客</div><div class="ch-desc">已破 · 真相已记入档案</div></div>
+          <div class="ch-status"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 L10 17.5 L19 7"/></svg></div>
+        </div>
+        <section class="dossier">
+          <div class="d-head"><span class="ch-badge">第 2 章</span><span class="now-tag">受理中</span></div>
+          <h2 class="d-title" id="dTitle">致命工具 · 锁定凶器</h2>
+          <div class="d-flourish"><svg viewBox="0 0 200 12" aria-hidden="true"><path d="M2 6 H120"/><path d="M120 6 q7 -5 11 0 q-7 5 -11 0"/><polygon class="gd" points="138,1 142,6 138,11 134,6"/><path d="M146 6 H198"/></svg></div>
+          <p class="intro-text"><span class="dropcap">现</span><span id="dIntro"></span></p>
+          <button class="start-btn" id="startCase">开 始 调 查</button>
+        </section>
+        <div class="chapter locked"><div class="ch-emblem"><svg class="wseal" viewBox="0 0 60 70" aria-hidden="true"><use href="#seal"/></svg></div><div class="ch-body"><div class="ch-no">第 3 章</div><div class="ch-title">密室之谜</div><div class="ch-desc">封缄待启</div></div><div class="ch-status"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11 V8 a4 4 0 0 1 8 0 V11"/></svg></div></div>
+        <div class="chapter locked"><div class="ch-emblem"><svg class="wseal" viewBox="0 0 60 70" aria-hidden="true"><use href="#seal"/></svg></div><div class="ch-body"><div class="ch-no">第 4 章</div><div class="ch-title">各怀心事</div><div class="ch-desc">封缄待启</div></div><div class="ch-status"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11 V8 a4 4 0 0 1 8 0 V11"/></svg></div></div>
+        <div class="chapter locked"><div class="ch-emblem"><svg class="wseal" viewBox="0 0 60 70" aria-hidden="true"><use href="#seal"/></svg></div><div class="ch-body"><div class="ch-no">第 5 章</div><div class="ch-title">斑点带子的真相</div><div class="ch-desc">封缄待启</div></div><div class="ch-status"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11 V8 a4 4 0 0 1 8 0 V11"/></svg></div></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== 棋盘 · 当前案件 ===== -->
+  <div id="screen-board" class="screen">
+  <main class="app">
+    <div class="film"></div>
+
+    <div class="scrap handwriting parchment" aria-hidden="true">
+      <div class="hw">funis vetus,<br>sub fenestra.</div>
+      <svg class="ink" viewBox="0 0 98 54"><circle class="a" cx="82" cy="14" r="3"/><circle class="c" cx="20" cy="42" r="2.4"/><circle class="b" cx="60" cy="36" r="1.6"/></svg>
+    </div>
+    <div class="scrap compass-scrap parchment" aria-hidden="true">
+      <div class="compass-art">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="46"/>
+          <circle cx="50" cy="50" r="41" stroke-width="2.5" stroke-dasharray="0.6 3.2"/>
+          <circle cx="50" cy="50" r="33"/>
+          <circle cx="50" cy="50" r="11"/>
+          <polygon points="50,7 53.5,50 50,50 46.5,50"/><polygon points="50,93 46.5,50 50,50 53.5,50"/>
+          <polygon points="7,50 50,46.5 50,50 50,53.5"/><polygon points="93,50 50,53.5 50,50 50,46.5"/>
+          <polygon points="50,50 68,32 56,46" opacity="0.7"/><polygon points="50,50 32,68 44,54" opacity="0.7"/>
+          <polygon points="50,50 68,68 54,56" opacity="0.7"/><polygon points="50,50 32,32 46,44" opacity="0.7"/>
+          <text x="50" y="20" text-anchor="middle">N</text><text x="50" y="86" text-anchor="middle">S</text>
+          <text x="84" y="53" text-anchor="middle">E</text><text x="16" y="53" text-anchor="middle">W</text>
+        </svg>
+      </div>
+      <svg class="scrap-blood" viewBox="0 0 46 40" aria-hidden="true">
+        <ellipse cx="18" cy="20" rx="11" ry="8"/><circle cx="32" cy="11" r="3.4"/>
+        <circle cx="36" cy="27" r="2.2"/><circle cx="8" cy="32" r="1.7"/><circle cx="40" cy="18" r="1.2"/>
+      </svg>
+      <svg class="ink" viewBox="0 0 166 166"><circle class="b" cx="40" cy="40" r="4"/><circle class="c" cx="54" cy="30" r="2"/><circle class="c" cx="30" cy="120" r="3"/></svg>
+    </div>
+
+    <svg class="ink-dark" viewBox="0 0 406 760" preserveAspectRatio="none" aria-hidden="true">
+      <circle cx="372" cy="96" r="3.4"/><circle cx="360" cy="104" r="1.4"/><circle cx="36" cy="150" r="2.6"/>
+      <circle cx="384" cy="372" r="3"/><circle cx="24" cy="430" r="2.2"/><circle cx="372" cy="560" r="2.6"/>
+      <circle cx="40" cy="600" r="1.6"/><circle cx="300" cy="470" r="2"/><circle cx="120" cy="690" r="2.8"/>
+    </svg>
+
+    <svg class="corner-fil tl" viewBox="0 0 46 46"><path d="M6 6 H38"/><path d="M6 6 V38"/><path d="M38 6 q-7 0 -9 6 q-2 6 4 6 q5 0 3 -5"/><path d="M6 38 q0 -7 6 -9 q6 -2 6 4 q0 5 -5 3"/><circle cx="6" cy="6" r="2"/></svg>
+    <svg class="corner-fil tr" viewBox="0 0 46 46"><path d="M6 6 H38"/><path d="M6 6 V38"/><path d="M38 6 q-7 0 -9 6 q-2 6 4 6 q5 0 3 -5"/><path d="M6 38 q0 -7 6 -9 q6 -2 6 4 q0 5 -5 3"/><circle cx="6" cy="6" r="2"/></svg>
+    <svg class="corner-fil bl" viewBox="0 0 46 46"><path d="M6 6 H38"/><path d="M6 6 V38"/><path d="M38 6 q-7 0 -9 6 q-2 6 4 6 q5 0 3 -5"/><path d="M6 38 q0 -7 6 -9 q6 -2 6 4 q0 5 -5 3"/><circle cx="6" cy="6" r="2"/></svg>
+    <svg class="corner-fil br" viewBox="0 0 46 46"><path d="M6 6 H38"/><path d="M6 6 V38"/><path d="M38 6 q-7 0 -9 6 q-2 6 4 6 q5 0 3 -5"/><path d="M6 38 q0 -7 6 -9 q6 -2 6 4 q0 5 -5 3"/><circle cx="6" cy="6" r="2"/></svg>
+
+    <header class="topbar">
+      <button class="back navback" id="boardBack" aria-label="返回章节"><svg viewBox="0 0 15 11" aria-hidden="true"><path d="M14 5.5 H3 M7 1 L3 5.5 L7 10"/></svg></button>
+      <span class="brand" data-text="ENIGMA">ENIGMA</span>
+      <div class="lives" id="lives" aria-label="生命值"></div>
+    </header>
+
+    <section class="ledger">
+      <div class="stain s1"></div><div class="stain s2"></div>
+      <div class="case-head">
+        <span class="case-no">CASE Nº VII</span>
+        <span class="case-d"></span>
+        <span class="case-name" id="caseName">致命工具</span>
+      </div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <div class="hud">
+      <div class="clue-count" id="count">线索 <b>0</b><span class="sep">/</span>0</div>
+      <div class="tools">
+        <button class="tool" id="hintBtn" title="点亮烛光 · 求提示" aria-label="提示"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="flame" d="M12 3 C12.2 5 13.4 5.6 13.4 7.1 C13.4 8.4 12.8 9 12 9 C11.2 9 10.6 8.4 10.6 7.1 C10.6 5.9 11.1 5.2 12 3 Z"/><rect x="9.5" y="10.5" width="5" height="8.5" rx="1.2"/><line x1="12" y1="9" x2="12" y2="10.5"/><line x1="7.8" y1="19" x2="16.2" y2="19"/><line x1="10.7" y1="13" x2="10.7" y2="16" opacity=".5"/></svg></button>
+      </div>
+    </div>
+
+    <section class="clues" id="clues"></section>
+  </main>
+  </div><!-- /#screen-board -->
+
+  <!-- 选值弹窗 -->
+  <div class="backdrop" id="backdrop">
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+      <div class="modal-title" id="mTitle">填入「物品」</div>
+      <div class="modal-sub" id="mSub">SELECT THE EVIDENCE</div>
+      <div class="opts" id="opts"></div>
+      <button class="cancel" id="cancelBtn">取消</button>
+    </div>
+  </div>
+
+  <!-- 裁决弹窗 -->
+  <div class="backdrop" id="vbackdrop">
+    <div class="modal" id="vmodal" role="dialog" aria-modal="true">
+      <div class="modal-title">裁 决</div>
+      <div class="modal-sub" id="vsub">NAME THE WEAPON</div>
+      <div class="v-q" id="vq"></div>
+      <div class="v-cands" id="vcands"></div>
+      <div id="vstars"></div>
+      <button class="solve-btn" id="accuseBtn" style="opacity:.5;pointer-events:none">指 认</button>
+      <div class="result" id="vresult"></div>
+      <button class="cancel" id="vcancel">返回卷宗</button>
+    </div>
+  </div>
+
+  <!-- 烛光提示门(此处未来可放激励广告位)-->
+  <div class="backdrop" id="hintgate">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-title">借一缕烛光</div>
+      <div class="modal-sub">A MOMENT OF INSIGHT</div>
+      <div class="opts">
+        <button class="opt parchment full" id="praiseOpt"><span class="e">🌟</span><span class="t">作者大大人美心善 · 万岁万岁!</span></button>
+      </div>
+      <button class="cancel" id="hintCancel">再想想</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script src="content_speckled.js"></script>
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const el = (tag,cls,html)=>{const n=document.createElement(tag); n.className=cls; if(html!=null)n.innerHTML=html; return n;};
+
+  // ---- 数据(来自已校验的 content_speckled.js)----
+  const C = window.SPECKLED_CONTENT;
+  const CH = C.chapters.find(c => c.id === "ch2-weapon");
+  const POS_CAT = CH.position_cat;                          // 「位次」= 列轴
+  const COLS = CH.categories[POS_CAT].slice();              // A–E
+  const COLN = COLS.length;
+  const ATTRS = Object.keys(CH.categories).filter(c => c !== POS_CAT);
+  const ROWS = ["物品", ...ATTRS];                          // 行:物品身份 + 各属性
+  const POOL = { "物品": CH.objects.slice() };
+  ATTRS.forEach(k => POOL[k] = CH.categories[k].slice());
+  const TOTAL_FILL = ROWS.length * COLN;
+  const OBJ_AT = COLS.map(p => CH.objects.find(o => CH.solution[o][POS_CAT] === p)); // 列→物品
+  const colOf = o => COLS.indexOf(CH.solution[o][POS_CAT]);
+
+  const EMOJI = {
+    "毒蛇":"🐍","毒药瓶":"🧪","旧绳索":"🪢","铁匕首":"🔪","壁炉拨火棍":"🔥",
+    "仍在蠕动":"〰️","沾有新鲜奶渍":"🥛","绳结已朽烂":"🧶","刃口光洁无血":"✨","积满灰尘":"🕸️",
+    "通风口下方":"🕳️","继父的保险箱":"🔐","花园棚屋":"🏚️","厨房水槽":"🚰","卧室壁炉旁":"🛋️",
+    "侦探":"🕵️","海伦小姐":"👩","庄园老仆":"👴","警局巡官":"👮","贴身女仆":"🧹",
+  };
+  const em = v => EMOJI[v] || "·";
+  const SUBEN = {"物品":"NAME THE EVIDENCE","状况":"STATE OF THE FIND","发现地点":"WHERE IT WAS FOUND","发现者":"WHO DISCOVERED IT"};
+  const MAX_HEARTS = 3;
+
+  const SIGIL='<svg class="sigil" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="27"/><circle cx="30" cy="30" r="21" stroke-dasharray="0.5 2.6"/><circle cx="30" cy="30" r="15"/><line x1="30" y1="1" x2="30" y2="59"/><line x1="1" y1="30" x2="59" y2="30"/><line x1="9" y1="9" x2="51" y2="51"/><line x1="51" y1="9" x2="9" y2="51"/><circle class="node" cx="30" cy="3" r="1.3"/><circle class="node" cx="30" cy="57" r="1.3"/><circle class="node" cx="3" cy="30" r="1.3"/><circle class="node" cx="57" cy="30" r="1.3"/><circle class="node" cx="30" cy="15" r="1.1"/><circle class="node" cx="45" cy="30" r="1.1"/></svg>';
+  const DET='<span class="det"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><line x1="14.4" y1="14.4" x2="20.5" y2="20.5"/><path d="M7.6 10 A2.4 2.4 0 0 1 10 7.6" opacity=".55"/></svg></span>';
+  const SEAL='<svg class="wseal" viewBox="0 0 60 70" aria-hidden="true"><path d="M27 46 C26 55 28 60 30 65 C32 60 34 55 33 46 Z" fill="#561a14"/><g fill="url(#waxg)"><circle cx="47" cy="30" r="7"/><circle cx="43" cy="18" r="7"/><circle cx="30" cy="13" r="7"/><circle cx="17" cy="18" r="7"/><circle cx="13" cy="30" r="7"/><circle cx="17" cy="42" r="7"/><circle cx="30" cy="47" r="7"/><circle cx="43" cy="42" r="7"/><circle cx="30" cy="30" r="20"/></g><circle cx="30" cy="30" r="14" fill="#641f17"/><g stroke="#9a3528" stroke-width="1.3" fill="none" opacity=".95"><circle cx="30" cy="30" r="9"/><path d="M30 21 V39 M21 30 H39 M23.6 23.6 L36.4 36.4 M36.4 23.6 L23.6 36.4"/></g><ellipse cx="23" cy="22" rx="5" ry="3" fill="rgba(255,210,190,.3)"/></svg>';
+  const VLEAF='<svg class="vleaf" viewBox="0 0 22 12" aria-hidden="true"><path d="M2 6 H14"/><path class="gd" d="M14 2 C18 1 21 3 21 6 C17 7 13 5 14 2 Z"/><path d="M9 6 C11 3 13 3 14 6"/></svg>';
+
+  // ---- 状态 ----
+  const state = { cells: [], revealedWaves: 1, erase: false, hearts: MAX_HEARTS, over: false, picking: null, opt: {} };
+  function shuffled(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function correctVal(r,c){ const o=OBJ_AT[c]; return r===0 ? o : CH.solution[o][ROWS[r]]; }
+  function reset(){
+    state.cells = ROWS.map(()=>Array(COLN).fill(null));
+    state.revealedWaves = 1; state.hearts = MAX_HEARTS; state.over = false; state.picking = null; state._st = false;
+    state.opt = {}; ROWS.forEach(r => state.opt[r] = shuffled(POOL[r]));
+  }
+
+  // ---- 网格 ----
+  const grid = $("#grid");
+  let cellEls = [], headEls = [];
+  function buildGrid(){
+    grid.innerHTML = "";
+    grid.appendChild(el("div","cell corner",SIGIL+DET));
+    headEls = [];
+    COLS.forEach(L => { const h = el("div","cell colhead",""); grid.appendChild(h); headEls.push(h); });
+    cellEls = [];
+    ROWS.forEach((row,r)=>{
+      grid.appendChild(el("div","cell rowlabel parchment brass",row));
+      const rowEls=[];
+      for(let c=0;c<COLN;c++){
+        const cell = el("div","cell slotcell","");
+        cell.tabIndex = 0;
+        cell.addEventListener("click",()=>onCell(r,c));
+        cell.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); onCell(r,c);} });
+        grid.appendChild(cell); rowEls.push(cell);
+      }
+      cellEls.push(rowEls);
+    });
+  }
+  function renderCell(r,c){
+    const cell = cellEls[r][c], v = state.cells[r][c];
+    cell.className = "cell slotcell" + (v?" filled":"") + (state.picking && state.picking.r===r && state.picking.c===c ? " editing":"");
+    cell.innerHTML = v ? ('<span class="ico">'+em(v)+'</span><span class="lab">'+v+'</span>') : "";
+  }
+  function renderHeader(c){
+    const v = state.cells[0][c];
+    headEls[c].innerHTML = '<span class="letter">'+COLS[c]+'</span>' +
+      (v ? '<span class="who">'+v+'</span>' : '<span class="q">?</span>');
+  }
+  function renderGridAll(){ for(let c=0;c<COLN;c++) renderHeader(c); cellEls.forEach((row,r)=>row.forEach((_,c)=>renderCell(r,c))); }
+
+  function onCell(r,c){
+    if(state.over) return;
+    if(state.cells[r][c]) return;   // 已填正确即锁定(不会填错,故无需擦除)
+    openModal(r,c);
+  }
+
+  // ---- 选值弹窗 ----
+  const backdrop=$("#backdrop"), modal=$("#modal"), optsBox=$("#opts");
+  function openModal(r,c){
+    state.picking = {r,c}; renderCell(r,c);
+    $("#mTitle").textContent = "填入「"+ROWS[r]+"」";
+    $("#mSub").textContent = SUBEN[ROWS[r]] || "";
+    const used = new Set(state.cells[r].filter(Boolean));
+    optsBox.innerHTML = "";
+    const list = state.opt[ROWS[r]];
+    list.forEach((v,i)=>{
+      const last = (list.length%2===1) && (i===list.length-1);
+      const dim = used.has(v);
+      const o = el("button","opt parchment"+(last?" full":"")+(dim?" dim":""),
+        '<span class="e">'+em(v)+'</span><span class="t">'+v+'</span>');
+      if(!dim) o.addEventListener("click",()=>pick(r,c,v));
+      optsBox.appendChild(o);
+    });
+    modal.classList.remove("in"); void modal.offsetWidth; modal.classList.add("in");
+    backdrop.classList.add("show");
+  }
+  function closeModal(){ backdrop.classList.remove("show"); const p=state.picking; state.picking=null; if(p) renderCell(p.r,p.c); }
+  function pick(r,c,v){
+    closeModal();
+    if(v === correctVal(r,c)){
+      state.cells[r][c] = v; renderCell(r,c); if(r===0) renderHeader(c); postUpdate();
+    } else {
+      const cell = cellEls[r][c];
+      bloodBurst(cell);
+      cell.classList.add("wrong"); setTimeout(()=>cell.classList.remove("wrong"),430);
+      toast("✗ 与线索不符 · 溅落一滴血");
+      setTimeout(()=>{ state.hearts = Math.max(0, state.hearts-1); renderLives(); if(state.hearts===0) gameOver(); }, 200);
+    }
+  }
+  // 🩸 溅开散落
+  function bloodBurst(cell){
+    const r = cell.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
+    for(let i=0;i<7;i++){
+      const p = el("span","bloodp","🩸");
+      const ang = Math.random()*6.283, dist = 24 + Math.random()*34;
+      p.style.left = cx+"px"; p.style.top = cy+"px";
+      p.style.fontSize = (12 + Math.random()*11).toFixed(0)+"px";
+      p.style.setProperty("--dx", (Math.cos(ang)*dist).toFixed(0)+"px");
+      p.style.setProperty("--dy", (Math.sin(ang)*dist - 10).toFixed(0)+"px");
+      document.body.appendChild(p); setTimeout(()=>p.remove(), 660);
+    }
+  }
+  $("#cancelBtn").addEventListener("click",closeModal);
+  backdrop.addEventListener("click",e=>{ if(e.target===backdrop) closeModal(); });
+
+  // ---- 生命 ----
+  function renderLives(){
+    const box=$("#lives"); box.innerHTML="";
+    for(let i=0;i<MAX_HEARTS;i++) box.appendChild(el("span","drop"+(i<state.hearts?"":" lost"),"🩸"));
+  }
+  function gameOver(){ state.over=true; toast("线索断了…… 点封蜡重启本案"); renderClues(); }
+
+  // ---- 线索 ----
+  function rowOf(cat){ return ROWS.indexOf(cat); }
+  function clueCells(e){ return (e.refs||[]).map(([o,cat]) => cat===POS_CAT ? [0,colOf(o)] : [rowOf(cat),colOf(o)]); }
+  function clueDone(e){ const cs=clueCells(e); return cs.length>0 && cs.every(([r,c])=> r>=0 && c>=0 && state.cells[r][c]); }
+  function filledNum(){ let n=0; state.cells.forEach(row=>row.forEach(v=>{ if(v) n++; })); return n; }
+  function totalShown(){ return CH.waves.reduce((a,w)=>a+w.length,0); }
+  function revealedShown(){ let n=0; for(let w=0;w<state.revealedWaves;w++) n+=CH.waves[w].length; return n; }
+  function unlockNeed(w){ return Math.round(TOTAL_FILL*(w-1)/CH.waves.length); }
+  const WAVE_CN = ["第一波线索","第二波线索","第三波线索","第四波线索","第五波线索"];
+
+  function slip(e,done){ return el("div","slip"+(done?" done":""),'<span class="stext">'+e.text+'</span>'); }
+
+  function renderClues(){
+    const box=$("#clues"); box.innerHTML="";
+    let revealed=[];
+    for(let w=0;w<state.revealedWaves && w<CH.waves.length;w++) revealed=revealed.concat(CH.waves[w]);
+    const active=revealed.filter(e=>!clueDone(e)), done=revealed.filter(e=>clueDone(e));
+    // 1) 待解读线索
+    box.appendChild(el("div","wave-label",VLEAF+" 待解读线索"));
+    if(active.length) active.forEach(e=>box.appendChild(slip(e,false)));
+    else box.appendChild(el("div","slip","（本批线索均已对应入册）"));
+    // 2) 行动按钮:重启 / 裁决 / 解锁封蜡 —— 紧跟待解读之后,始终可见
+    if(state.over){
+      box.appendChild(el("div","slip","💔 血已流尽——线索就此中断。"));
+      const b=el("button","solve-btn","重 启 本 案"); b.onclick=startGame; box.appendChild(b);
+    } else if(solved()){
+      const b=el("button","solve-btn","▶ 指 认 真 凶 器"); b.onclick=openVerdict; box.appendChild(b);
+    } else if(state.revealedWaves < CH.waves.length){
+      const need=unlockNeed(state.revealedWaves+1), have=filledNum(), left=Math.max(0,need-have);
+      const lock=el("div","locked"+(left===0?" open":""),"");
+      lock.innerHTML = SEAL + '<span>'+(left===0
+        ? "拆开封蜡 · 解锁<b>"+WAVE_CN[state.revealedWaves]+"</b>"
+        : "再填 <b>"+left+"</b> 格 · 解锁"+WAVE_CN[state.revealedWaves])+'</span>';
+      if(left===0) lock.onclick=()=>{ state.revealedWaves++; postUpdate(); };
+      box.appendChild(lock);
+    }
+    // 3) 已验证(沉到最底)
+    if(done.length){
+      box.appendChild(el("div","wave-label verified",VLEAF+" 已验证 · "+done.length));
+      done.forEach(e=>box.appendChild(slip(e,true)));
+    }
+  }
+
+  function solved(){ return filledNum()===TOTAL_FILL; }
+  function postUpdate(){
+    renderClues();
+    $("#count").innerHTML = "线索 <b>"+revealedShown()+"</b><span class=\"sep\">/</span>"+totalShown();
+    if(solved() && !state.over && !state._st){ state._st = true; toast("✦ 全部入册 · 下方可「指认真凶器」"); }
+  }
+
+  // ---- 烛光提示(经"提示门"——此处未来可接激励广告)----
+  const hintgate = $("#hintgate");
+  $("#hintBtn").addEventListener("click",()=>{ if(state.over || solved()) return; hintgate.classList.add("show"); });
+  $("#hintCancel").addEventListener("click",()=>hintgate.classList.remove("show"));
+  hintgate.addEventListener("click",e=>{ if(e.target===hintgate) hintgate.classList.remove("show"); });
+  $("#praiseOpt").addEventListener("click",()=>{ hintgate.classList.remove("show"); doHint(); });
+  function fillCorrect(r,c){
+    state.cells[r][c] = correctVal(r,c); renderCell(r,c); if(r===0) renderHeader(c);
+    const cell = cellEls[r][c]; cell.classList.add("hint"); setTimeout(()=>cell.classList.remove("hint"),2400);
+    toast("🕯 烛光照亮了一格"); postUpdate();
+  }
+  function doHint(){
+    // 按「待解读线索」的顺序提示:补齐最靠前那条未验证线索的一个空格
+    let revealed=[];
+    for(let w=0;w<state.revealedWaves && w<CH.waves.length;w++) revealed=revealed.concat(CH.waves[w]);
+    for(const e of revealed){
+      if(clueDone(e)) continue;
+      for(const [r,c] of clueCells(e)){ if(r>=0 && c>=0 && !state.cells[r][c]){ fillCorrect(r,c); return; } }
+    }
+    for(let r=0;r<ROWS.length;r++) for(let c=0;c<COLN;c++) if(!state.cells[r][c]){ fillCorrect(r,c); return; }
+  }
+
+  // ---- 裁决 ----
+  const vbackdrop=$("#vbackdrop"); let accuseSel=null;
+  function openVerdict(){
+    accuseSel=null; $("#accuseBtn").style.opacity=".5"; $("#accuseBtn").style.pointerEvents="none";
+    $("#vresult").className="result"; $("#vq").textContent=CH.verdict.question;
+    const cb=$("#vcands"); cb.innerHTML="";
+    CH.objects.forEach(o=>{
+      const card=el("div","v-cand parchment",'<span class="e">'+em(o)+'</span><span class="t">'+o+'</span>');
+      card.onclick=()=>{ accuseSel=o; [...cb.children].forEach(x=>x.classList.remove("sel")); card.classList.add("sel");
+        $("#accuseBtn").style.opacity="1"; $("#accuseBtn").style.pointerEvents="auto"; };
+      cb.appendChild(card);
+    });
+    const sb=$("#vstars"); sb.innerHTML="";
+    CH.verdict.clues.forEach(vc=> sb.appendChild(el("div","star",vc.text)));
+    vbackdrop.classList.add("show");
+  }
+  function closeVerdict(){ vbackdrop.classList.remove("show"); }
+  $("#vcancel").addEventListener("click",closeVerdict);
+  vbackdrop.addEventListener("click",e=>{ if(e.target===vbackdrop) closeVerdict(); });
+  $("#accuseBtn").addEventListener("click",()=>{
+    const r=$("#vresult");
+    if(accuseSel===CH.verdict.answer){
+      r.className="result show win";
+      r.innerHTML="🎯 推理无误。真凶器是「"+em(CH.verdict.answer)+" "+CH.verdict.answer+"」。<br>本案告破——下一关将顺着它,查出蛇如何进出反锁的卧室。";
+    } else {
+      r.className="result show lose";
+      r.innerHTML="再斟酌。回看 ★ 裁决线索:哪些物品因伤口形态、或无法离开反锁现场而被排除?";
+    }
+  });
+
+  // ---- toast ----
+  let toastT;
+  function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),1600); }
+
+  // ---- 启动 ----
+  function startGame(){
+    closeVerdict();
+    reset(); buildGrid(); renderGridAll(); renderLives(); postUpdate();
+  }
+
+  // ---- 屏幕导航:首页 → 章节 → 棋盘 ----
+  function showScreen(id){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+    document.getElementById(id).classList.add("on");
+    window.scrollTo(0,0);
+  }
+  $("#openStory").addEventListener("click",()=>showScreen("screen-chapters"));
+  $("#chaptersBack").addEventListener("click",()=>showScreen("screen-home"));
+  $("#startCase").addEventListener("click",()=>{ showScreen("screen-board"); startGame(); });
+  $("#boardBack").addEventListener("click",()=>showScreen("screen-chapters"));
+
+  // ---- 初始化 ----
+  $("#caseName").textContent = CH.title;
+  $("#dTitle").textContent = CH.title + " · " + CH.dimension;
+  $("#dIntro").textContent = CH.narrative.replace(/^现/, "");  // 首字已作 dropcap
+  buildGrid(); renderGridAll();   // 预构棋盘(隐藏),进入时再 reset
+  showScreen("screen-home");
+})();
+</script>
+</body>
+</html>
